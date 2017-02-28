@@ -94,7 +94,7 @@ debug.dependsOn(['copyLibraries', 'copyResources', 'jar'])
  */
 task createPackage(type: Copy, description: 'Creates package for production.', group: 'build') {
 	into "$buildDir/production"
-	from 'resources'
+	from 'resources/production'
 	from "$buildDir/libs"
 
 	rename {
