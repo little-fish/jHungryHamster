@@ -1,0 +1,35 @@
+<configuration>
+    <property name="LOG_LOCATION" value="logs" />
+    <property name="LOG_FILE_NAME" value="EventNotifierApp" />
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-36(%date{"dd MMM yyyy HH:mm:ss,SSS"} [%thread]) %-5level [%logger:%line] - %message%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_LOCATION}/${LOG_FILE_NAME}.log</file>
+        <encoder>
+            <pattern>%-36(%date{"dd MMM yyyy HH:mm:ss,SSS"} [%thread]) %-5level [%logger:%line] - %message%n</pattern>
+        </encoder>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>2MB</maxFileSize>
+        </triggeringPolicy>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_LOCATION}/${LOG_FILE_NAME}.%i.log.zip</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>3</maxIndex>
+        </rollingPolicy>
+    </appender>
+
+    <root level="warn">
+        <appender-ref ref="console" />
+        <appender-ref ref="file" />
+    </root>
+
+    <logger name="cz.babi.jhungryhamster" level="warn">
+        <appender-ref ref="console" />
+        <appender-ref ref="file" />
+    </logger>
+</configuration>

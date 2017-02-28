@@ -1,0 +1,105 @@
+group 'cz.babi'
+version '0.1.4'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+
+ext {
+	mainClass = 'cz.babi.java.jhungryhamster.Main'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.2.1'
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    compile(
+        'ch.qos.logback:logback-classic:1.1.3',
+        'org.slf4j:slf4j-api:1.7.13',
+        'org.apache.commons:commons-lang3:3.4',
+        'org.tmatesoft.sqljet:sqljet:1.1.10',
+        'com.github.insubstantial:substance:7.3',
+        'com.github.insubstantial:substance-flamingo:7.3',
+        'com.github.insubstantial:substance-swingx:7.3',
+        'com.github.insubstantial:trident:7.3',
+        'net.java.dev.appframework:appframework:1.03'
+    )
+}
+
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': version,
+                'Class-Path': configurations.runtime.collect { 'lib/' + it.getName() }.join(' '),
+                'Main-Class': project.mainClass,
+                'SplashScreen-Image': 'res/img/splashscreen/jhungryhamster.png'
+        )
+    }
+}
+
+/**
+ * Copies all necessary dependencies into output/libs folder.
+ */
+task copyLibraries(type: Copy, description: 'Copies all necessary dependencies into output/libs folder.') {
+	into "$buildDir/libs/lib"
+	from configurations.runtime
+}
+
+/**
+ * Copies all necessary resources into output/libs folder.
+ */
+task copyResources(type: Copy, description: 'Copies all necessary resources into output/libs folder.') {
+	into "$buildDir/libs"
+	from 'src/production/resources'
+}
+
+build.dependsOn(['copyLibraries', 'copyResources'])
+
+/**
+ * Runs the application.
+ */
+task run(type: JavaExec, description: 'Runs the application.', group: 'run') {
+	classpath = files("${buildDir}/libs/${jar.archiveName}")
+	main = project.mainClass
+	workingDir = "$buildDir/libs"
+	systemProperty 'logback.configurationFile', 'logback.xml'
+}
+
+run.dependsOn(['copyLibraries', 'copyResources', 'jar'])
+
+/**
+ * Debugs the application.
+ */
+task debug(type: JavaExec, description: 'Debugs the application. The process will be suspended until you connect to port 5005.', group: 'run') {
+	classpath = files("${buildDir}/libs/${jar.archiveName}")
+	main = project.mainClass
+	workingDir = "$buildDir/libs"
+	systemProperty 'logback.configurationFile', 'logback.xml'
+	debug true
+}
+
+debug.dependsOn(['copyLibraries', 'copyResources', 'jar'])
+
+/**
+ * Creates package for production.
+ */
+task createPackage(type: Copy, description: 'Creates package for production.', group: 'build') {
+	into "$buildDir/production"
+	from 'resources'
+	from "$buildDir/libs"
+
+	rename {
+		String fileName -> fileName.replace(jar.archiveName, 'jHungryHamster.jar')
+	}
+}
+
+createPackage.dependsOn(build)
