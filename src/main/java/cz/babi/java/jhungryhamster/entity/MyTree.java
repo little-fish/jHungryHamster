@@ -31,6 +31,7 @@ import cz.babi.java.jhungryhamster.gui.MainFrame;
 import cz.babi.java.jhungryhamster.gui.MyToolbar;
 import cz.babi.java.jhungryhamster.gui.RecipeDialog;
 import cz.babi.java.jhungryhamster.gui.SearchPanel;
+import cz.babi.java.jhungryhamster.utils.Common;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
 /**
@@ -70,6 +72,9 @@ public class MyTree extends JTree implements Serializable {
     private static MyTree tree = new MyTree();
     private static MyToolbar instanceMyToolbar = MyToolbar.getInstance();
     private static DatabaseOperations databaseOperations = DatabaseOperations.getInstance();
+
+    private static ResourceBundle RES = Common.RESOURCE_BUNDLE;
+
     /**
      * Tyto tři proměnné se nastavují jakmile uživatel klikne na nějakou položku
      * ve stromu. Pracuje se s němi při zobrazování, editování, mazání,
@@ -246,7 +251,7 @@ public class MyTree extends JTree implements Serializable {
         tree.scrollPathToVisible(addedTreePath);
         tree.setSelectionPath(addedTreePath);
 
-        MainFrame.getStatusPanel().setStatusMessage("Přídán nový recept '" + recipe.getTitle() + "'", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.recipeCreated.text") + ": '" + recipe.getTitle() + "'",
                 new Date(), Icons.STATUS_RECIPE_NEW);
     }
 
@@ -288,7 +293,7 @@ public class MyTree extends JTree implements Serializable {
         
         model.createSortedCategories();
         
-        MainFrame.getStatusPanel().setStatusMessage("Přídána nová kategorie '" + category.getTitle() + "'", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.categoryCreated.text") + ": '" + category.getTitle() + "'",
                 new Date(), Icons.STATUS_CATEGORY_NEW);
     }
 
@@ -343,7 +348,7 @@ public class MyTree extends JTree implements Serializable {
             }
         }
         
-        MainFrame.getStatusPanel().setStatusMessage("Editována kategorie '" + category.getTitle() + "'", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.categoryEdited.text") + ": '" + category.getTitle() + "'",
                 new Date(), Icons.STATUS_CATEGORY_EDIT);
     }
 
@@ -385,7 +390,7 @@ public class MyTree extends JTree implements Serializable {
             }
         }
         
-        MainFrame.getStatusPanel().setStatusMessage("Editován recept '" + recipe.getTitle() + "'", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.recipeEdited.text") + ": '" + recipe.getTitle() + "'",
                 new Date(), Icons.STATUS_RECIPE_EDIT);
     }
 
@@ -397,7 +402,7 @@ public class MyTree extends JTree implements Serializable {
         
         model.removeRecipe();
         
-        MainFrame.getStatusPanel().setStatusMessage("Smazán recept '" + removedRecipe + "'", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.recipeDeleted.text") + ": '" + removedRecipe + "'",
                 new Date(), Icons.STATUS_RECIPE_DELETE);
     }
 
@@ -424,7 +429,7 @@ public class MyTree extends JTree implements Serializable {
         
         model.createSortedCategories();
         
-        MainFrame.getStatusPanel().setStatusMessage("Smazána kategorie '" + removedCategory + "'", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.categoryDeleted.text") + ": '" + removedCategory + "'",
                 new Date(), Icons.STATUS_CATEGORY_DELETE);
     }
 
@@ -436,7 +441,7 @@ public class MyTree extends JTree implements Serializable {
         
         model.createSortedCategories();
         
-        MainFrame.getStatusPanel().setStatusMessage("Smazáno více kategorií", 
+        MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.multipleCategoryDeleted.text"),
                 new Date(), Icons.STATUS_CATEGORY_DELETE);
     }
 
