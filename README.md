@@ -17,6 +17,7 @@ By using the application you can easily maintain all your recipes, sort them int
 #Notes:
 * The application uses relative paths for your database and settings. So feel free to move the whole content of `build/production` to any folder you want.
 * In case you do not know how/want to build it by yourself, just do not hesitate to contact me.
+* The application does not contain any database of recipes! You have to create your own database.
 
 # Screenshots:
 ![Main window](https://github.com/little-fish/jhungryhamster/blob/master/resources/screenshots/main-window.png)
