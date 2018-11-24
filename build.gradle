@@ -1,5 +1,7 @@
+import java.text.SimpleDateFormat
+
 group 'cz.babi'
-version '0.1.4'
+version '1.0.0'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -9,10 +11,11 @@ compileJava.options.encoding = 'UTF-8'
 
 ext {
 	mainClass = 'cz.babi.java.jhungryhamster.Main'
-}
+	
+	// Keystore file.
+	keystoreFile = 'keystore.properties'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.2.1'
+	maintainer = 'Martin Misiarz'
 }
 
 repositories {
@@ -37,11 +40,17 @@ dependencies {
 jar {
     manifest {
         attributes(
+				"Created-By": project.maintainer,
+				"Created-On": new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
                 'Implementation-Title': project.name,
                 'Implementation-Version': version,
                 'Class-Path': configurations.runtime.collect { 'lib/' + it.getName() }.join(' '),
                 'Main-Class': project.mainClass,
-                'SplashScreen-Image': 'res/img/splashscreen/jhungryhamster.png'
+                'SplashScreen-Image': 'res/img/splashscreen/jhungryhamster.png',
+				"Build-JDK": System.getProperty('java.version'),
+				"Source-Compatibility": project.sourceCompatibility,
+				"Target-Compatibility": project.targetCompatibility,
+				"License": "Apache-2.0"
         )
     }
 }
@@ -103,3 +112,55 @@ task createPackage(type: Copy, description: 'Creates package for production.', g
 }
 
 createPackage.dependsOn(build)
+
+def keystorePropertiesFile = project.file(keystoreFile)
+if (keystorePropertiesFile.exists()) {
+	// Load keystore properties.
+	def keystoreProperties = new Properties()
+	keystoreProperties.load(keystorePropertiesFile.newDataInputStream())
+
+	// Default Gradle signing.
+	if (keystoreProperties['signing.keyId'] && keystoreProperties['signing.password'] && keystoreProperties['signing.secretKeyRingFile']) {
+		project.ext['signing.keyId'] = keystoreProperties['signing.keyId']
+		project.ext['signing.password'] = keystoreProperties['signing.password']
+		project.ext['signing.secretKeyRingFile'] = keystoreProperties['signing.secretKeyRingFile']
+
+		project.plugins.apply('signing')
+
+		signing {
+			sign configurations.archives
+		}
+	}
+
+	// Custom JAR signing.
+	if (keystoreProperties['jarsigning.keystore'] && keystoreProperties['jarsigning.keystoreType'] && keystoreProperties['jarsigning.keystorePassword'] && keystoreProperties['jarsigning.alias'] && keystoreProperties['jarsigning.keyPassword']) {
+		project.tasks.create('signedJar') {
+			group = 'build'
+			dependsOn = ['jar']
+
+			doLast {
+				String libsDir = file("$buildDir").absolutePath+File.separator+'libs'+File.separator
+				ant.signjar(
+						jar: libsDir+project.tasks.jar.archiveName,
+						signedjar: libsDir+generateSignedArtifactName(project.tasks.jar.archiveName),
+						alias: keystoreProperties['jarsigning.alias'],
+						storetype: keystoreProperties['jarsigning.keystoreType'],
+						keystore: file(keystoreProperties['jarsigning.keystore']).absolutePath,
+						storepass: keystoreProperties['jarsigning.keystorePassword'],
+						keypass: keystoreProperties['jarsigning.keyPassword']
+				)
+			}
+		}
+
+		project.tasks.getByName('build').dependsOn += ['signedJar']
+	}
+}
+/**
+ * Generates name with '-signed' suffix added to given artifact's name.
+ * @param artifactName Original artifact's name.
+ * @return Artifact's name with '-signed' suffix.
+ */
+private static def generateSignedArtifactName(String artifactName) {
+	def lastDot = artifactName.lastIndexOf('.')
+	return artifactName.substring(0, lastDot) + '-signed' + artifactName.substring(lastDot)
+}

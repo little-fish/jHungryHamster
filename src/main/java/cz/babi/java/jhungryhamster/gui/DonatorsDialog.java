@@ -80,7 +80,7 @@ public class DonatorsDialog extends javax.swing.JDialog {
         jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(RESOURCE_BUNDLE.getString("DonatorsDialog.title"));
+        setTitle(RESOURCE_BUNDLE.getString("DonorsDialog.title"));
         setName("Form");
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -100,7 +100,7 @@ public class DonatorsDialog extends javax.swing.JDialog {
 
         jLabel1.setFont(new java.awt.Font("DejaVu Sans", 1, 20));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText(RESOURCE_BUNDLE.getString("DonatorsDialog.title"));
+        jLabel1.setText(RESOURCE_BUNDLE.getString("DonorsDialog.title"));
         jLabel1.setName("jLabel1");
 
         jLabel2.setText("Franta Kocourek");

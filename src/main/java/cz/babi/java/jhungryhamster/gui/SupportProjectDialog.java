@@ -154,8 +154,8 @@ public class SupportProjectDialog extends javax.swing.JDialog {
         jLabel5.setText(bundle.getString("SupportProjectDialog.lblSupportThanks.text"));
         jLabel5.setName("jLabel5");
 
-        btnShowDonators.setText(bundle.getString("SupportProjectDialog.btnShowDonators.text"));
-        btnShowDonators.setToolTipText(bundle.getString("SupportProjectDialog.btnShowDonators.tooltip"));
+        btnShowDonators.setText(bundle.getString("SupportProjectDialog.btnShowDonors.text"));
+        btnShowDonators.setToolTipText(bundle.getString("SupportProjectDialog.btnShowDonors.tooltip"));
         btnShowDonators.setName("btnShowDonators");
         btnShowDonators.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

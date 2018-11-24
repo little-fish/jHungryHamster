@@ -302,7 +302,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         });
 
         txtCategoryIndenterText.setText(settings.getUserCategoryJoiner());
-        txtCategoryIndenterText.setToolTipText(bundle.getString("SettingsDialog.txtCategoryIndenterText.tooltip"));
+        txtCategoryIndenterText.setToolTipText(bundle.getString("SettingsDialog.txtCategoryIndentText.tooltip"));
         txtCategoryIndenterText.setEnabled((settings.getCategoryIndenter().equals(CategoryIndenter.Custom)) ? true : false);
         txtCategoryIndenterText.setName("txtCategoryIndenterText");
         txtCategoryIndenterText.addCaretListener(new javax.swing.event.CaretListener() {

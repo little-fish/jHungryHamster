@@ -130,7 +130,7 @@ public class RenameDatabaseDialog extends javax.swing.JDialog {
         lblName.setName("lblName");
 
         txtfName.setText(databaseName);
-        txtfName.setToolTipText(bundle.getString("RenameDatabseDialog.txtfName.tooltip"));
+        txtfName.setToolTipText(bundle.getString("RenameDatabaseDialog.txtfName.tooltip"));
         txtfName.setName("txtfName");
         txtfName.addCaretListener(new javax.swing.event.CaretListener() {
             public void caretUpdate(javax.swing.event.CaretEvent evt) {

@@ -32,16 +32,6 @@ import cz.babi.java.jhungryhamster.gui.MyToolbar;
 import cz.babi.java.jhungryhamster.gui.RecipeDialog;
 import cz.babi.java.jhungryhamster.gui.SearchPanel;
 import cz.babi.java.jhungryhamster.utils.Common;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.ImageIcon;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.Component;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -53,6 +43,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
+import javax.swing.ImageIcon;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Třída definující obsah stromu s recepty a práci s nimi.
@@ -101,7 +101,7 @@ public class MyTree extends JTree implements Serializable {
     public static MyTree getInstance() {
         return tree;
     }
-    
+
     /**
      * Metoda inicializuje strom receptů.
      * @param firstRun První spuštění.
@@ -109,7 +109,7 @@ public class MyTree extends JTree implements Serializable {
     public void initMyTree(boolean firstRun) {
         collator = java.text.Collator.getInstance();
         collator.setStrength(java.text.Collator.TERTIARY);
-        
+
         model = new CookBookFilteredTreeModel(
                 new DefaultMutableTreeNode(settings.getDatabaseName()));
         tempModel = myContainer.getCookBookFilteredTreeModel();
@@ -125,11 +125,11 @@ public class MyTree extends JTree implements Serializable {
         setModel(model);
         setCellRenderer(new MyRenderer());
     }
-    
+
     public static void renameRootNode(String newName) {
         model.renameRoot(newName);
     }
-    
+
     /**
      * Metoda vrací mapu všech kategorií (podle jejich ID)
      * @return mapa kategorií.
@@ -137,7 +137,7 @@ public class MyTree extends JTree implements Serializable {
     public static HashMap<Integer, DefaultMutableTreeNode> getCategoryMap() {
         return model.getCategoryMap();
     }
-    
+
     /**
      * Metoda vrací mapu všech receptů (podle jejich ID)
      * @return mapa receptů.
@@ -152,44 +152,43 @@ public class MyTree extends JTree implements Serializable {
      * @param filter textový řetězec pro vyhledávání
      * @param showStatusMessage má-li se zobrazit status zpráva
      */
-    public static DefaultMutableTreeNode setFilterToModel(String filter, boolean showStatusMessage) {
-        //TODO: udělat vyhledávání ve vlákně, aby nedocházelo ke zamrzání gui
-        Recipe firstMatch = model.setFilter(filter, showStatusMessage);
-        
-        /* pokud byl nalezen nějaký recept odpovídající filtru, tak se označí
-         první výskyt*/
-        if(firstMatch==null) {
-            if(settings.isShowRootElement()) tree.expandRow(0);
-            else model.reload();
-        } else if(firstMatch.equals((DefaultMutableTreeNode)model.getRoot())) {
-            if(settings.isShowRootElement()) tree.expandRow(0);
-            else model.reload();
-        } else if(firstMatch!=null) {
-            if(settings.isSelectFirstMatch()) {
-                DefaultMutableTreeNode firstLeaf = ((DefaultMutableTreeNode)tree.getModel().getRoot()).getFirstLeaf();
-                if(!firstLeaf.isRoot())
-                    tree.setSelectionPath(new TreePath(firstLeaf.getPath()));
-            }
-            
-            if(settings.isShowWholeTreeAfterSearch()) {
-                for (int i = 0; i < tree.getRowCount(); i++) {
-                    tree.expandRow(i);
+    public static void setFilterToModel(String filter, boolean showStatusMessage) {
+        SwingUtilities.invokeLater(() -> {
+            Recipe firstMatch = model.setFilter(filter, showStatusMessage);
+
+            /* pokud byl nalezen nějaký recept odpovídající filtru, tak se označí
+             první výskyt*/
+            if(firstMatch==null) {
+                if(settings.isShowRootElement()) tree.expandRow(0);
+                else model.reload();
+            } else if(firstMatch.equals((DefaultMutableTreeNode)model.getRoot())) {
+                if(settings.isShowRootElement()) tree.expandRow(0);
+                else model.reload();
+            } else if(firstMatch!=null) {
+                if(settings.isSelectFirstMatch()) {
+                    DefaultMutableTreeNode firstLeaf = ((DefaultMutableTreeNode)tree.getModel().getRoot()).getFirstLeaf();
+                    if(!firstLeaf.isRoot())
+                        tree.setSelectionPath(new TreePath(firstLeaf.getPath()));
+                }
+
+                if(settings.isShowWholeTreeAfterSearch()) {
+                    for (int i = 0; i < tree.getRowCount(); i++) {
+                        tree.expandRow(i);
+                    }
                 }
             }
-        }
-        
-        return null;
+        });
     }
-    
+
     /**
-     * Metoda vrací pole kategorií pro naplnění jComboBoxů pro vytváření a 
+     * Metoda vrací pole kategorií pro naplnění jComboBoxů pro vytváření a
      * editaci receptů a kategorií.
      * @return pole kategorií.
      */
     public static Node[] getAllSortedCategories() {
         return model.getSortedCategories();
     }
-    
+
     /**
      * Metoda se volá pro znovuvytvření pole kategorií.
      */
@@ -203,7 +202,7 @@ public class MyTree extends JTree implements Serializable {
     public void reloadVariable() {
         model.reloadVariable();
     }
-    
+
     /**
      * Metoda pro seřazení části stromu.
      * @param node Rodič, jehož potomci budou seřazeni.
@@ -227,9 +226,9 @@ public class MyTree extends JTree implements Serializable {
                 recipe,
                 (currentCategory == null) ? 0 : currentCategory.getIdNode());
         recipe.setIdRecipe(recipeId);
-        
+
 //        recipe.setIdCategory((currentCategory == null) ? 0 : currentCategory.getIdNode());
-        
+
         DefaultMutableTreeNode addedTreeNode = model.addObjectFromDatabase(recipe);
         
         /* po přidání nového receptu je nutné seřadit všechny uzly v dané kategorii;
@@ -243,8 +242,8 @@ public class MyTree extends JTree implements Serializable {
             else sortTree((DefaultMutableTreeNode)getClickedTreeNode().getParent());
         } else if(getClickedTreeNode().isRoot())
             sortTree((DefaultMutableTreeNode)model.getRoot());
-        
-        
+
+
         //TODO: selection not working
         TreePath addedTreePath = new TreePath(addedTreeNode.getPath());
 //        tree.expandPath(addedTreePath.getParentPath());
@@ -267,7 +266,7 @@ public class MyTree extends JTree implements Serializable {
                 category,
                 category.getIdParent());
         category.setIdNode(categoryId);
-        
+
         final DefaultMutableTreeNode addedTreeNode = model.addObjectFromDatabase(category);
         
         /* po přidání nové kategorie je nutné seřadit všechny uzly;
@@ -281,18 +280,18 @@ public class MyTree extends JTree implements Serializable {
             else sortTree((DefaultMutableTreeNode)getClickedTreeNode().getParent());
         } else if(getClickedTreeNode().isRoot())
             sortTree((DefaultMutableTreeNode)model.getRoot());
-        
+
         //TODO: selection not working
         tree.setExpandsSelectedPaths(true);
         TreePath addedTreePath = new TreePath(model.getPathToRoot(addedTreeNode));
         tree.expandPath(addedTreePath);
-        
+
         tree.scrollPathToVisible(addedTreePath);
         tree.setSelectionPath(new TreePath(model.getPathToRoot(addedTreeNode)));
-        
-        
+
+
         model.createSortedCategories();
-        
+
         MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.categoryCreated.text") + ": '" + category.getTitle() + "'",
                 new Date(), Icons.STATUS_CATEGORY_NEW);
     }
@@ -316,13 +315,13 @@ public class MyTree extends JTree implements Serializable {
      */
     public static void editCategory(Node category) {
         DefaultMutableTreeNode editedNode = model.editNodeObject(category);
-        
+
         TreePath addedTreePath = new TreePath(editedNode.getPath());
         tree.scrollPathToVisible(addedTreePath);
         tree.setSelectionPath(addedTreePath);
-        
+
         model.reloadVariable();
-        
+
         /* pokud se změnil název receptu či kategorie, musí dojít k seřezení */
         if(CategoryDialog.changeTitle || CategoryDialog.changeCategory) {
             if(!SearchPanel.getFilter().equals("")) {
@@ -337,9 +336,9 @@ public class MyTree extends JTree implements Serializable {
                 else sortTree((DefaultMutableTreeNode)getClickedTreeNode().getParent());
             } else if(getClickedTreeNode().isRoot())
                 sortTree((DefaultMutableTreeNode)model.getRoot());
-            
+
             model.createSortedCategories();
-            
+
             addedTreePath = new TreePath(editedNode.getPath());
             tree.scrollPathToVisible(addedTreePath);
             tree.setSelectionPath(addedTreePath);
@@ -347,7 +346,7 @@ public class MyTree extends JTree implements Serializable {
             model.reloadVariable();
             }
         }
-        
+
         MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.categoryEdited.text") + ": '" + category.getTitle() + "'",
                 new Date(), Icons.STATUS_CATEGORY_EDIT);
     }
@@ -360,7 +359,7 @@ public class MyTree extends JTree implements Serializable {
      */
     public static void editRecipe(Recipe recipe) {
         DefaultMutableTreeNode editedNode = model.editRecipeObject(recipe);
-        
+
         TreePath addedTreePath = new TreePath(editedNode.getPath());
         tree.scrollPathToVisible(addedTreePath);
         tree.setSelectionPath(addedTreePath);
@@ -382,14 +381,14 @@ public class MyTree extends JTree implements Serializable {
                     else sortTree((DefaultMutableTreeNode)getClickedTreeNode().getParent());
                 } else if(getClickedTreeNode().isRoot())
                     sortTree((DefaultMutableTreeNode)model.getRoot());
-                
+
                 addedTreePath = new TreePath(editedNode.getPath());
                 tree.scrollPathToVisible(addedTreePath);
                 tree.setSelectionPath(addedTreePath);
                 model.reloadVariable();
             }
         }
-        
+
         MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.recipeEdited.text") + ": '" + recipe.getTitle() + "'",
                 new Date(), Icons.STATUS_RECIPE_EDIT);
     }
@@ -399,9 +398,9 @@ public class MyTree extends JTree implements Serializable {
      */
     public static void removeRecipe() {
         String removedRecipe = getCurrentRecipe().getTitle();
-        
+
         model.removeRecipe();
-        
+
         MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.recipeDeleted.text") + ": '" + removedRecipe + "'",
                 new Date(), Icons.STATUS_RECIPE_DELETE);
     }
@@ -411,7 +410,7 @@ public class MyTree extends JTree implements Serializable {
      */
     public static void removeOnlyCategory() {
         String removedCategory = getCurrentCategory().getTitle();
-        
+
         model.removeOnlyCategory();
         
         /* po přidání nového receptu je nutné seřadit všechny uzly v dané kategorii;
@@ -426,9 +425,9 @@ public class MyTree extends JTree implements Serializable {
             else sortTree((DefaultMutableTreeNode)getClickedTreeNode().getParent());
         } else if(getClickedTreeNode().isRoot())
             sortTree((DefaultMutableTreeNode)model.getRoot());
-        
+
         model.createSortedCategories();
-        
+
         MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.categoryDeleted.text") + ": '" + removedCategory + "'",
                 new Date(), Icons.STATUS_CATEGORY_DELETE);
     }
@@ -438,9 +437,9 @@ public class MyTree extends JTree implements Serializable {
      */
     public static void removeAllCategory() {
         model.removeAllCategory();
-        
+
         model.createSortedCategories();
-        
+
         MainFrame.getStatusPanel().setStatusMessage(RES.getString("MyTree.statusMessage.multipleCategoryDeleted.text"),
                 new Date(), Icons.STATUS_CATEGORY_DELETE);
     }
@@ -496,16 +495,16 @@ public class MyTree extends JTree implements Serializable {
         private static final long serialVersionUID = 5632874215454265848L;
 
         private static final Logger LOGGER = LoggerFactory.getLogger(CookBookFilteredTreeModel.class);
-        
-        private HashMap<Integer, DefaultMutableTreeNode> categoryMap = new HashMap<Integer, DefaultMutableTreeNode>();        
+
+        private HashMap<Integer, DefaultMutableTreeNode> categoryMap = new HashMap<Integer, DefaultMutableTreeNode>();
         private HashMap<Integer, DefaultMutableTreeNode> recipeMap = new HashMap<Integer, DefaultMutableTreeNode>();
         private ArrayList<DefaultMutableTreeNode> needReorganizeOrRemoveList = new ArrayList<DefaultMutableTreeNode>();
-        
+
         private Node[] sortedCategories = null;
-        
-        HashMap<Integer, DefaultMutableTreeNode> tempCategoryMap = new HashMap<Integer, DefaultMutableTreeNode>();        
+
+        HashMap<Integer, DefaultMutableTreeNode> tempCategoryMap = new HashMap<Integer, DefaultMutableTreeNode>();
         HashMap<Integer, DefaultMutableTreeNode> tempRecipeMap = new HashMap<Integer, DefaultMutableTreeNode>();
-        
+
         /*
          * filtr pro vyhledávání ve stromu receptů
          */
@@ -530,20 +529,20 @@ public class MyTree extends JTree implements Serializable {
         public Node[] getSortedCategories() {
             return sortedCategories;
         }
-        
+
         /**
          * Metoda vytvoří pole kategorií přesně v pořadí, jakém se nacházejí ve stromu
          * a uloží jej do třídní proměnné.
          */
         public void createSortedCategories() {
             ArrayList<Node> sortedCategoriesList = new ArrayList<>();
-            
+
             /* nutno přidat roota */
             sortedCategoriesList.add(new Node(root.toString(), 0, -1));
-            
+
             if(!getCategoryMap().isEmpty()) {
                 ArrayList<DefaultMutableTreeNode> sortedMutableCategories = new ArrayList<>
-                        (getCategoryMap().values());           
+                        (getCategoryMap().values());
 
                 Comparator categoryComparator = new Comparator () {
                     @Override
@@ -581,7 +580,7 @@ public class MyTree extends JTree implements Serializable {
                 int idParent = tempNode.getIdParent();
                 String prefix;
                 String settingsPrefix = "";
-                
+
                 if(settings.getCategoryIndenter().equals(CategoryIndenter.Custom))
                     settingsPrefix = settings.getUserCategoryJoiner() + " ";
                 else if(settings.getCategoryIndenter().equals(CategoryIndenter.None)) ;
@@ -605,11 +604,11 @@ public class MyTree extends JTree implements Serializable {
                             }
                         }
                     }
-                    
+
                     sortedCategoriesList.add(j, new Node(prefix+node.getTitle(), node.getIdNode(), node.getIdParent()));
                 }
             }
-            
+
             sortedCategories = new Node[sortedCategoriesList.size()];
             for (int i = 0; i < sortedCategoriesList.size(); i++) {
                 sortedCategories[i] = sortedCategoriesList.get(i);
@@ -617,7 +616,7 @@ public class MyTree extends JTree implements Serializable {
         }
 
 
-        
+
         /**
          * Metoda vyfiltruje požadované položky.
          * @param filter Filtr podle kterého se budou jednotlivé recepty filtrovat.
@@ -625,20 +624,22 @@ public class MyTree extends JTree implements Serializable {
          * @return První nalezený recept dle vstupního filtru.
          */
         public Recipe setFilter(String filter, boolean showStatusMessage) {
+            LOGGER.warn("setFilter");
 
             Recipe firstMatch = null;
 
             /* pokud je filtr prázdný, je nutné zrekonstruovat celý strom se všemi recepty */
             if(filter==null || filter.toLowerCase().equals(this.filter.toLowerCase())) {
                 fillTreeAfterFiltering(categoryMap, recipeMap);
-                
+
                 if(showStatusMessage) MainFrame.getStatusPanel().setStatusMessage(RESOURCE_BUNDLE.getString("Filter.emptyFilter"),
                         new Date(), Icons.STATUS_SEARCH);
-                
+
                 return null;
             }
-            
+
             LOGGER.debug("start filtering");
+            LOGGER.warn("start filtering");
 
             tempCategoryMap.clear();
             tempRecipeMap.clear();
@@ -806,6 +807,8 @@ public class MyTree extends JTree implements Serializable {
                 }
             }
 
+            LOGGER.warn("here");
+
             if(showStatusMessage) MainFrame.getStatusPanel().setStatusMessage(RESOURCE_BUNDLE.getString("Filter.recipesFound") + ": " + tempRecipeMap.size(),
                         new Date(), Icons.STATUS_SEARCH);
 
@@ -823,14 +826,15 @@ public class MyTree extends JTree implements Serializable {
             }
 
             LOGGER.debug("stop filterring");
+            LOGGER.warn("stop filterring");
 
             return firstMatch;
         }
-        
-        
-        
+
+
+
 //        private Map<Integer, DefaultMutableTreeNode> sortByValue(Map<Integer, DefaultMutableTreeNode> map) {
-//           
+//
 //            List<Map.Entry<Integer, DefaultMutableTreeNode>> list = new LinkedList<>(map.entrySet());
 //            Collections.sort(list, new Comparator<Map.Entry<Integer, DefaultMutableTreeNode>>() {
 //                @Override
@@ -866,7 +870,7 @@ public class MyTree extends JTree implements Serializable {
 //    }
 //    return result;
 //        }
-        
+
         /**
          * Metoda naplní strom vyfiltrovanými záznamy.
          * @param categories Kategorie k naplnění.
@@ -875,9 +879,9 @@ public class MyTree extends JTree implements Serializable {
          */
         private Recipe fillTreeAfterFiltering(HashMap<Integer, DefaultMutableTreeNode> categories,
                 HashMap<Integer, DefaultMutableTreeNode> recipes) {
-            
+
             Recipe firstMatch = null;
-            
+
             /* nutno vzmazat cely strom před přidáním vyfiltrovaných záznamů */
             Enumeration<DefaultMutableTreeNode> enumeration = root.children();
             while(enumeration.hasMoreElements()) {
@@ -885,9 +889,9 @@ public class MyTree extends JTree implements Serializable {
                 enumeration = root.children();
                 removeNodeFromParent(n);
             }
-            
+
             HashMap<Integer, Node> tempCategories = new HashMap<>();
-            
+
 //            categories = sortByValue(categories);
 //            Map<Integer, DefaultMutableTreeNode> cat = sortByValue(categories);
             
@@ -897,7 +901,7 @@ public class MyTree extends JTree implements Serializable {
             for(DefaultMutableTreeNode node : categories.values()) {
                 tempNodes.add((Node)node.getUserObject());
             }
-            
+
             tempNodes.sort(new Comparator<Node>() {
 
                 @Override
@@ -906,7 +910,7 @@ public class MyTree extends JTree implements Serializable {
 //                    return (o1.getTitle().compareTo(o2.getTitle()));
                 }
             });
-        
+
             while(!tempNodes.isEmpty()) {
                 for(Iterator<Node> iterator = tempNodes.iterator(); iterator.hasNext(); ) {
                     Node node = iterator.next();
@@ -931,7 +935,7 @@ public class MyTree extends JTree implements Serializable {
             for(DefaultMutableTreeNode recipe : recipes.values()) {
                 tempRecipes.add((Recipe)recipe.getUserObject());
             }
-            
+
             tempRecipes.sort(new Comparator<Recipe>() {
 
                 @Override
@@ -939,26 +943,26 @@ public class MyTree extends JTree implements Serializable {
                     return collator.compare(o1.getTitle(), o2.getTitle());
                 }
             });
-            
+
             for(Recipe recipe : tempRecipes) {
                 if(firstMatch==null) firstMatch = recipe;
                 addObjectFromDatabase(recipe);
             }
-            
+
 //            Iterator<DefaultMutableTreeNode> ir = recipes.values().iterator();
 //            while(ir.hasNext()) {
 //                DefaultMutableTreeNode treeNode = ir.next();
-//                
+//
 //                /* první nalezený záznam je nutné uchovat, aby se ve stromu označil */
 //                Recipe r = (Recipe)treeNode.getUserObject();
 //                if(firstMatch==null) firstMatch = r;
-//                
+//
 //                addObjectFromDatabase(r);
 //            }
-            
+
             return firstMatch;
         }
-          
+
         /**
          * Metoda přidá nový objekt do seznamu.
          *
@@ -984,7 +988,7 @@ public class MyTree extends JTree implements Serializable {
                 return addObject((DefaultMutableTreeNode) model.getRoot(), child, true);
             }
         }
-        
+
         /**
          * Add child to the currently selected node.
          */
@@ -1001,7 +1005,7 @@ public class MyTree extends JTree implements Serializable {
             if (parent.getUserObject() instanceof Recipe) {
                 parent = (DefaultMutableTreeNode) parent.getParent();
             }
-            
+
             //It is key to invoke this on the TreeModel, and NOT DefaultMutableTreeNode
             insertNodeInto(childNode, parent, parent.getChildCount());
 
@@ -1034,7 +1038,7 @@ public class MyTree extends JTree implements Serializable {
 //                    for(int j=i+1; j<root.getChildCount(); j++) {
 //                        DefaultMutableTreeNode nodeFirst = (DefaultMutableTreeNode)root.getChildAt(i);
 //                        DefaultMutableTreeNode nodeSecond = (DefaultMutableTreeNode)root.getChildAt(j);
-//                        
+//
 //                        String nameFirst = null;
 //                        String nameSecond = null;
 //
@@ -1045,7 +1049,7 @@ public class MyTree extends JTree implements Serializable {
 //                            nameFirst = n1.getTitle();
 //                            Node n2 =(Node)nodeSecond.getUserObject();
 //                            nameSecond = n2.getTitle();
-//                            
+//
 //                            if(nameFirst.compareToIgnoreCase(nameSecond)>0) {
 //                                root.insert(nodeSecond, i);
 ////                                model.reload(nodeSecond);
@@ -1054,18 +1058,18 @@ public class MyTree extends JTree implements Serializable {
 //                            /* pokud jsou oba uzly recepty, jen se porovnají názvy */
 //                            if(nodeFirst.getUserObject() instanceof Recipe &&
 //                                nodeSecond.getUserObject() instanceof Recipe) {
-//                            
+//
 //                            Recipe r1 =(Recipe)nodeFirst.getUserObject();
 //                            nameFirst = r1.getTitle();
 //                            Recipe r2 =(Recipe)nodeSecond.getUserObject();
 //                            nameSecond = r2.getTitle();
-//                            
+//
 //                            if(nameFirst.compareToIgnoreCase(nameSecond)>0) {
 //                                root.insert(nodeSecond, i);
 ////                                model.reload(nodeSecond);
 //                            }
 //                        } else
-//                            /* pokud je první uzel recept a druhy kategorie, přehodí se */  
+//                            /* pokud je první uzel recept a druhy kategorie, přehodí se */
 //                            if(nodeFirst.getUserObject() instanceof Recipe &&
 //                                nodeSecond.getUserObject() instanceof Node) {
 //                            root.insert(nodeSecond, i);
@@ -1078,7 +1082,7 @@ public class MyTree extends JTree implements Serializable {
 //                    }
 //                }
 //            }
-//            
+//
 //            model.reload(root);
 //            LOGGER.debug("Konec řazení potomků v uzlu: " + root);
 //        }
@@ -1149,20 +1153,20 @@ public class MyTree extends JTree implements Serializable {
                                     }
                                 }
                             }
-                            
+
                             ArrayList<DefaultMutableTreeNode> tempNodes = new ArrayList<DefaultMutableTreeNode>(needReorganizeOrRemoveList);
-                            
+
                             int categoryCount = 0;
                             for(DefaultMutableTreeNode defaultNode : tempNodes) {
                                 if(defaultNode.getUserObject() instanceof Node)
                                     categoryCount++;
                             }
-                            
+
                             while(categoryCount!=0) {
-                                for(Iterator<DefaultMutableTreeNode> iterator = 
+                                for(Iterator<DefaultMutableTreeNode> iterator =
                                         tempNodes.iterator(); iterator.hasNext(); ) {
                                     DefaultMutableTreeNode defaultTreeNode = iterator.next();
-                                    
+
                                     if(defaultTreeNode.getUserObject() instanceof Node) {
                                         Node node = (Node)defaultTreeNode.getUserObject();
 
@@ -1196,7 +1200,7 @@ public class MyTree extends JTree implements Serializable {
 
                             this.reload(categoryMap.get(editetNode.getIdNode()));
 
-                            return categoryMap.get(editetNode.getIdNode());                        
+                            return categoryMap.get(editetNode.getIdNode());
                         }
                     }
                 } else {
@@ -1255,45 +1259,45 @@ public class MyTree extends JTree implements Serializable {
                     }
                 }
             }
-            
+
             return null;
         }
-        
+
         /**
-         * Metoda se volá rekurzivně pro zjištění zda-li chceme vložit kategorii 
+         * Metoda se volá rekurzivně pro zjištění zda-li chceme vložit kategorii
          * do kategorie, která je potomkem původní kategorie.
          * @param sameBranchList Seznam všech indexů do kterého se budou vkládat
          * nové indexy pozic.
          * @param currentNode Uzel, ve kterém se bude hledat nová rodičovská kategorie.
-         * @param newParentNode Rodičovská kategorie-kategorie do které chceme 
+         * @param newParentNode Rodičovská kategorie-kategorie do které chceme
          * editovanou kategorii vložit.
          */
-        private void checkAnotherSameBranch(ArrayList<Integer> sameBranchList, 
+        private void checkAnotherSameBranch(ArrayList<Integer> sameBranchList,
                 DefaultMutableTreeNode currentNode, DefaultMutableTreeNode newParentNode) {
-            
+
             Enumeration<DefaultMutableTreeNode> children = currentNode.children();
             while(children.hasMoreElements()) {
                 DefaultMutableTreeNode child = children.nextElement();
-                
+
                 sameBranchList.add(currentNode.getIndex(newParentNode));
                 if(!child.isLeaf()) checkAnotherSameBranch(sameBranchList, child, newParentNode);
             }
         }
-        
+
         /**
-         * Metoda zjistí, zda-li chceme vložit kategorii do kategorie, která je 
+         * Metoda zjistí, zda-li chceme vložit kategorii do kategorie, která je
          * potomkem původní kategorie.
          * @param currentNode Editovaná kategorie.
          * @param newParentNode Kategorie, do které chceme editovanou kategorii vložit.
-         * @return Je kategorie, do které chceme editovanou kategorii vložit 
+         * @return Je kategorie, do které chceme editovanou kategorii vložit
          * její potomek?
          */
         private boolean checkSameBranch(DefaultMutableTreeNode currentNode, DefaultMutableTreeNode newParentNode) {
             /* je-li newParentNode roven null, znamená to, že parent je kořen stromu (root) */
             if(newParentNode==null) newParentNode = (DefaultMutableTreeNode)root;
-            
+
             ArrayList<Integer> sameBranchList = new ArrayList<Integer>();
-            
+
             /* je-li současný uzel kořen, vracíme okamžitě false */
             if(currentNode.isLeaf()) return false;
             else {
@@ -1301,10 +1305,10 @@ public class MyTree extends JTree implements Serializable {
                 Enumeration<DefaultMutableTreeNode> children = currentNode.children();
                 while(children.hasMoreElements()) {
                     DefaultMutableTreeNode child = children.nextElement();
-                    
+
                     /* vždy přidáme index hledaného úzlu do seznamu */
                     sameBranchList.add(currentNode.getIndex(newParentNode));
-                    
+
                     /* pokud potomek není uzel, musíme projít i jeho potomky */
                     if(!child.isLeaf()) checkAnotherSameBranch(sameBranchList, child, newParentNode);
                 }
@@ -1317,7 +1321,7 @@ public class MyTree extends JTree implements Serializable {
 //                System.out.println("lastIndexOf: " +i);
                 if(i!=-1) return true;
             }
-            
+
             return false;
         }
 
@@ -1345,12 +1349,12 @@ public class MyTree extends JTree implements Serializable {
 
                     this.reload(currentNode);
                     this.reload(recipeMap.get(recipe.getIdRecipe()));
-                    
+
                     return recipeMap.get(recipe.getIdRecipe());
 //                    return currentNode;
                 }
             }
-            
+
             return null;
         }
 
@@ -1358,7 +1362,7 @@ public class MyTree extends JTree implements Serializable {
          * Metoda vymaze ze stromu daný recept.
          */
         public void removeRecipe() {
-            
+
             if (databaseOperations.removeRecipeById(
                     FileOperations.getUserDatabaseFile(), getCurrentRecipe().getIdRecipe())) {
                 recipeMap.remove(getCurrentRecipe().getIdRecipe());
@@ -1453,7 +1457,7 @@ public class MyTree extends JTree implements Serializable {
                             addObjectFromDatabase(treeNode.getUserObject());
                         }
                     }
-                    
+
                     categoryMap.remove(idToDelete);
                 }
             }
@@ -1471,7 +1475,7 @@ public class MyTree extends JTree implements Serializable {
                 DefaultMutableTreeNode child = children.nextElement();
 
                 needReorganizeOrRemoveList.add(child);
-                
+
                 if(needDeleteNodeFromMap) {
                     if(child.getUserObject() instanceof Node) {
                         Node n = (Node)child.getUserObject();
@@ -1568,7 +1572,7 @@ public class MyTree extends JTree implements Serializable {
                     instanceMyToolbar.enableIconDelete(false);
                     instanceMyToolbar.enableIconEdit(false);
                     instanceMyToolbar.enableIconPrint(false);
-                    
+
                     instanceMyToolbar.setToolTipBtnDelete(RESOURCE_BUNDLE.getString("Toolbar.btnDelete.tooltip"));
                     instanceMyToolbar.setToolTipBtnEdit(RESOURCE_BUNDLE.getString("Toolbar.btnEdit.tooltip"));
                     instanceMyToolbar.setToolTipBtnPrint(RESOURCE_BUNDLE.getString("Toolbar.btnPrint.tooltip"));
@@ -1589,7 +1593,7 @@ public class MyTree extends JTree implements Serializable {
                     instanceMyToolbar.setToolTipBtnPrint(RESOURCE_BUNDLE.getString("Toolbar.btnPrintRecipe.tooltip"));
                     instanceMyToolbar.setToolTipBtnDelete(RESOURCE_BUNDLE.getString("Toolbar.btnDeleteRecipe.tooltip"));
                     instanceMyToolbar.setToolTipBtnEdit(RESOURCE_BUNDLE.getString("Toolbar.btnEditRecipe.tooltip"));
-                                        
+
                     Recipe r = (Recipe) currentNode.getUserObject();
                     if(r.getRecipeImage()==null) {
                         LOGGER.debug("Začátek získávání obrázku z databáze pro recept '" + r.getTitle() + "'.");
@@ -1625,7 +1629,7 @@ public class MyTree extends JTree implements Serializable {
 //            System.out.println("currentCategory " + currentCategory);
 //            System.out.println("clickedNode " + clickedTreeNode);
         }
-        
+
         /**
          * Metoda změní název databáze ve stromu receptů.
          * @param newName Nové jméno databáze
@@ -1649,7 +1653,7 @@ public class MyTree extends JTree implements Serializable {
 //
 //            /* nutno přidát roota */
 //            alNodes.add(new Node(root.toString(), 0, -1));
-//            
+//
 //            while (children.hasMoreElements()) {
 //                DefaultMutableTreeNode child = children.nextElement();
 //
@@ -1670,24 +1674,24 @@ public class MyTree extends JTree implements Serializable {
 //
 //            return retNodes;
 //        }
-//        
+//
 //        /**
-//         * Metoda zjistí, zda-li předek (kategorie) má další potomky (kategorie) 
+//         * Metoda zjistí, zda-li předek (kategorie) má další potomky (kategorie)
 //         * a přidá je do seznamu kategorií
 //         * @param children
 //         * @param alNodes
-//         * @param prefix 
+//         * @param prefix
 //         */
-//        private void checkExistAnotherCatrgories(Enumeration<DefaultMutableTreeNode> children, 
+//        private void checkExistAnotherCatrgories(Enumeration<DefaultMutableTreeNode> children,
 //                ArrayList<Node> alNodes, String prefix) {
-//            
+//
 //            while (children.hasMoreElements()) {
 //                DefaultMutableTreeNode child = children.nextElement();
 //
 //                if (child.getUserObject() instanceof Node) {
 //                    Node n = (Node)child.getUserObject();
 //                        alNodes.add(new Node(prefix+n.getTitle(), n.getIdNode(), n.getIdParent()));
-//                    
+//
 //                    if(!child.isLeaf())
 //                        checkExistAnotherCatrgories(child.children(), alNodes, prefix+"- ");
 //                }
@@ -1751,7 +1755,7 @@ public class MyTree extends JTree implements Serializable {
                 return false;
             }
         }
-        
+
         /**
          * Metoda zjistí, zda-li je uzel stromu kořen.
          * @param value uzel stromu.
@@ -1760,7 +1764,7 @@ public class MyTree extends JTree implements Serializable {
         protected boolean isRoot(Object value) {
             DefaultMutableTreeNode node =
                     (DefaultMutableTreeNode)value;
-            
+
             return node.isRoot();
         }
     }

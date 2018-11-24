@@ -1,6 +1,6 @@
 <configuration>
     <property name="LOG_LOCATION" value="logs" />
-    <property name="LOG_FILE_NAME" value="EventNotifierApp" />
+    <property name="LOG_FILE_NAME" value="jHungryHamster" />
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
